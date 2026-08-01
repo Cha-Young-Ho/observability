@@ -1,0 +1,81 @@
+# 트레이스 수신 전용 Alloy — Deployment 1대(게이트웨이).
+#
+# 왜 DaemonSet 이 아닌가:
+#   tail sampling 은 "한 트레이스의 모든 span 이 같은 인스턴스에 모여야"
+#   판단할 수 있다. DaemonSet 이면 앱이 자기 노드의 Alloy 로 보내므로
+#   여러 노드를 거치는 요청의 span 이 흩어지고, 각 인스턴스는 트레이스의
+#   일부만 보고 잘못 판단한다.
+#
+#   2대 이상으로 늘릴 때는 trace_id 기준 라우팅(로드밸런싱 익스포터)이
+#   추가로 필요하다. 랩에서는 1대로 시작하면 그 문제가 없다.
+
+alloy:
+  # 컨테이너의 OTLP 포트를 Service 로 노출한다.
+  # 앱은 alloy-gateway.observability.svc:4317 로 보낸다.
+  extraPorts:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+
+  configMap:
+    content: |
+      // ── OTLP 수신 ──
+      otelcol.receiver.otlp "default" {
+        grpc { endpoint = "0.0.0.0:4317" }
+        http { endpoint = "0.0.0.0:4318" }
+        output {
+          traces = [otelcol.processor.tail_sampling.default.input]
+        }
+      }
+
+      // ── tail sampling: 에러·지연은 전부 보관, 정상은 1%만 ──
+      otelcol.processor.tail_sampling "default" {
+        // 트레이스가 완성되기를 이만큼 기다린 뒤 판단한다.
+        // 짧으면 늦게 도착한 span 을 놓치고, 길면 메모리를 더 쓴다.
+        decision_wait = "10s"
+
+        // 앱이 span.SetStatus(codes.Error, ...) 로 표시한 것.
+        // HTTP 200 에 내부 코드로 에러를 내리는 API 라면
+        // 앱 미들웨어에서 이걸 직접 세팅해줘야 여기 걸린다.
+        policy {
+          name = "errors"
+          type = "status_code"
+          status_code { status_codes = ["ERROR"] }
+        }
+
+        // 느린 요청은 에러가 아니어도 원인 규명 대상이다.
+        policy {
+          name = "slow"
+          type = "latency"
+          latency { threshold_ms = 1000 }
+        }
+
+        // 정상 요청도 1% 는 남긴다 — 비교할 기준선이 없으면
+        // "이게 원래 느린 건지" 판단할 수 없다.
+        policy {
+          name = "baseline"
+          type = "probabilistic"
+          probabilistic { sampling_percentage = 1 }
+        }
+
+        output {
+          traces = [otelcol.exporter.otlp.tempo.input]
+        }
+      }
+
+      // ── Tempo 로 전송 ──
+      otelcol.exporter.otlp "tempo" {
+        client {
+          endpoint = "tempo:4317"
+          tls { insecure = true }   // 클러스터 내부 통신이라 평문
+        }
+      }
+
+controller:
+  type: deployment
+  replicas: 1

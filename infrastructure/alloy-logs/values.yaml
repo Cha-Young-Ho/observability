@@ -1,0 +1,40 @@
+# 로그 수집 전용 Alloy — 노드마다 하나(DaemonSet).
+# 파드 stdout 은 노드 디스크에 쌓이므로 각 노드에 수집기가 있어야 한다.
+# 트레이스는 여기서 받지 않는다 — alloy-gateway 가 담당한다.
+
+alloy:
+  extraEnv:
+    # 자기가 어느 노드에 떠 있는지 알아야 그 노드의 파드만 골라낼 수 있다.
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+
+  configMap:
+    content: |
+      // ── 이 노드에 있는 파드만 대상으로 삼는다 ──
+      // 필터가 없으면 DaemonSet 인스턴스 3개가 전부 모든 파드를 긁어
+      // 같은 로그를 3번 보내게 된다.
+      discovery.kubernetes "pods" {
+        role = "pod"
+        selectors {
+          role  = "pod"
+          field = "spec.nodeName=" + sys.env("NODE_NAME")
+        }
+      }
+
+      // 쿠버네티스 API 를 통해 파드 로그를 읽는다.
+      // 라벨(namespace/pod/container)은 이 컴포넌트가 자동으로 붙여준다.
+      loki.source.kubernetes "pods" {
+        targets    = discovery.kubernetes.pods.targets
+        forward_to = [loki.write.default.receiver]
+      }
+
+      loki.write "default" {
+        endpoint {
+          url = "http://loki:3100/loki/api/v1/push"
+        }
+      }
+
+controller:
+  type: daemonset
