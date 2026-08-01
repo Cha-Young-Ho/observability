@@ -1,0 +1,6 @@
+{
+  "name": "promtail",
+  "chart": "promtail",
+  "version": "6.17.1",
+  "repoURL": "https://grafana.github.io/helm-charts"
+}

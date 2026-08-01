@@ -1,0 +1,6 @@
+{
+  "name": "kps",
+  "chart": "kube-prometheus-stack",
+  "version": "88.0.1",
+  "repoURL": "https://prometheus-community.github.io/helm-charts"
+}
