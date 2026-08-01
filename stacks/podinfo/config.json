@@ -1,7 +1,0 @@
-{
-  "name": "podinfo",
-  "chart": "podinfo",
-  "version": "6.14.1",
-  "repoURL": "https://stefanprodan.github.io/podinfo",
-  "namespace": "demo"
-}

@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+
+  # apps/<이름>/config.json 을 스캔한다.
+  # 디렉터리 하나 = 서비스 하나 = Application 하나.
+  generators:
+    - git:
+        repoURL: "https://github.com/Cha-Young-Ho/observability.git"
+        revision: main
+        files:
+          - {path: "apps/*/config.json"}
+
+  template:
+    metadata:
+      name: '{{.name}}'
+    spec:
+      project: default
+      source:
+        repoURL: "https://github.com/Cha-Young-Ho/observability.git"
+        targetRevision: main
+        path: '{{.path.path}}'        # 제너레이터가 준 디렉터리 경로 (apps/podinfo)
+        directory:
+          recurse: true               # 하위 디렉터리까지 (예: sidecar/)
+          exclude: "config.json"      # 메타 파일은 매니페스트가 아니므로 제외
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        automated: {prune: true, selfHeal: true}
+        syncOptions: [CreateNamespace=true, ServerSideApply=true]

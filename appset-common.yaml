@@ -1,19 +1,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: observability-stack
+  name: common
   namespace: argocd
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    # stacks/*/config.json 을 스캔한다.
+    # common/*/config.json 을 스캔한다. (플랫폼 공통 도구)
     # 디렉터리 하나 추가 = 앱 하나 추가. 이 파일은 다시 고칠 일이 없다.
     - git:
         repoURL: "https://github.com/Cha-Young-Ho/observability.git"
         revision: main
         files:
-          - {path: "stacks/*/config.json"}   # JSON의 최상위 키가 그대로 템플릿 변수가 된다
+          - {path: "common/*/config.json"}   # JSON의 최상위 키가 그대로 템플릿 변수가 된다
   # ── 템플릿: 각 항목을 어떤 Application으로 만들 것인가 ──
   template:
     metadata:
@@ -27,7 +27,7 @@ spec:
           targetRevision: '{{.version}}'   # 버전 고정 = 재현성
           helm:
             valueFiles:
-              - $values/stacks/{{.name}}/values.yaml
+              - $values/common/{{.name}}/values.yaml
         # 소스 2: values를 담은 내 Git 저장소
         - repoURL: "https://github.com/Cha-Young-Ho/observability.git"
           targetRevision: main
