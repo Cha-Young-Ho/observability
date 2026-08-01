@@ -1,0 +1,16 @@
+prometheus:
+  prometheusSpec:
+    # 이 차트가 만들지 않은 ServiceMonitor·PodMonitor·PrometheusRule도 전부 수집
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    retention: "6h"                # 랩이라 짧게. 운영은 15d~30d
+    resources:
+      requests: {memory: "400Mi", cpu: "200m"}
+
+grafana:
+  adminPassword: "admin1234"         # 랩 전용. 운영은 Secret/외부 인증
+  defaultDashboardsEnabled: true       # K8s 기본 대시보드 자동 설치
+  additionalDataSources:              # Explore에서 로그·트레이스로 건너뛰기 위함
+    - {name: Loki,  type: loki,  url: "http://loki:3100",  access: proxy}
+    - {name: Tempo, type: tempo, url: "http://tempo:3100", access: proxy}

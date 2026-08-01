@@ -1,0 +1,19 @@
+deploymentMode: SingleBinary          # 랩용 최소 구성(운영은 분산 모드)
+loki:
+  auth_enabled: false                 # 멀티테넌시 끔(X-Scope-OrgID 불필요)
+  commonConfig: {replication_factor: 1}
+  storage: {type: filesystem}         # S3 대신 파드 로컬 디스크
+  schemaConfig:
+    configs:                           # ← 반드시 'configs'(복수). 이 아래에 리스트
+      - from: "2024-01-01"
+        store: tsdb                    # ← 'storage'가 아니라 'store'
+        object_store: filesystem
+        schema: v13                    # ← 'shema' 오타 주의
+        index: {prefix: index_, period: 24h}
+singleBinary: {replicas: 1}
+# 분산 컴포넌트와 캐시는 랩에서 전부 끔
+read: {replicas: 0}
+write: {replicas: 0}
+backend: {replicas: 0}
+chunksCache: {enabled: false}
+resultsCache: {enabled: false}

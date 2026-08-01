@@ -1,0 +1,13 @@
+tempo:
+  receivers:                           # 어떤 프로토콜로 트레이스를 받을지
+    otlp:
+      protocols:
+        grpc: {endpoint: "0.0.0.0:4317"}   # OTel SDK 기본 포트
+        http: {endpoint: "0.0.0.0:4318"}
+  storage:
+    trace:
+      backend: local                   # 랩이라 로컬 디스크(운영은 s3/gcs)
+      local: {path: /var/tempo/traces}
+  retention: 24h                       # 트레이스는 용량이 커서 짧게
+persistence:
+  enabled: false 
