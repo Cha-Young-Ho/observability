@@ -38,3 +38,15 @@ alloy:
 
 controller:
   type: daemonset
+
+  # 컨트롤플레인 노드에는 NoSchedule taint 가 걸려 있다.
+  # 이걸 허용하지 않으면 그 노드에는 수집기가 안 뜨고,
+  # etcd·apiserver·scheduler 로그가 통째로 누락된다.
+  # (promtail 차트는 이 toleration 을 기본 제공하지만 alloy 차트는 아니다)
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      effect: NoSchedule
+      operator: Exists
+    - key: node-role.kubernetes.io/master
+      effect: NoSchedule
+      operator: Exists
