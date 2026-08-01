@@ -1,0 +1,47 @@
+alloy:
+  configMap:
+    content: |
+      // ───── 로그: 파드 로그를 긁어 Loki로 (Promtail 대체) ─────
+      discovery.kubernetes "pods" { role = "pod" }
+
+      loki.source.kubernetes "pods" {
+        targets    = discovery.kubernetes.pods.targets
+        forward_to = [loki.write.default.receiver]
+      }
+
+      loki.write "default" {
+        endpoint { url = "http://loki:3100/loki/api/v1/push" }
+      }
+
+      // ───── 트레이스: OTLP로 받는다 (신규) ─────
+      otelcol.receiver.otlp "default" {
+        grpc { endpoint = "0.0.0.0:4317" }   // OTel SDK 기본 포트
+        http { endpoint = "0.0.0.0:4318" }
+        output { traces = [otelcol.processor.tail_sampling.default.input] }
+      }
+
+      // ───── tail sampling: 에러·지연은 전부, 정상은 1%만 ─────
+      otelcol.processor.tail_sampling "default" {
+        decision_wait = "10s"          // 트레이스 완성을 기다리는 시간
+
+        policy { name = "errors" type = "status_code"
+                 status_code { status_codes = ["ERROR"] } }
+
+        policy { name = "slow" type = "latency"
+                 latency { threshold_ms = 1000 } }
+
+        policy { name = "baseline" type = "probabilistic"
+                 probabilistic { sampling_percentage = 1 } }
+
+        output { traces = [otelcol.exporter.otlp.tempo.input] }
+      }
+
+      otelcol.exporter.otlp "tempo" {
+        client {
+          endpoint = "tempo:4317"
+          tls { insecure = true }     // 클러스터 내부라 평문
+        }
+      }
+
+controller:
+  type: daemonset      # 노드마다 하나 — 로그 파일을 읽으려면 각 노드에 있어야 함

@@ -1,0 +1,8 @@
+{
+  "name": "alloy",
+  "chart": "alloy",
+  "version": "v1.18.0",
+  "repoURL": "https://grafana.github.io/helm-charts",
+  "namespace": "observability"
+}
+  
