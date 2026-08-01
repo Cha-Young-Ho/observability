@@ -14,3 +14,19 @@ grafana:
   additionalDataSources:              # Explore에서 로그·트레이스로 건너뛰기 위함
     - {name: Loki,  type: loki,  url: "http://loki:3100",  access: proxy}
     - {name: Tempo, type: tempo, url: "http://tempo:3100", access: proxy}
+
+alertmanager:
+  config:
+    route:
+      receiver: "null"                 # 기본은 버림(랩이라 알림 안 받음)
+      routes:
+        - matchers: ['escalate="true"']   # 이 라벨이 붙은 알림만
+          receiver: obs-controller
+          repeat_interval: 5m          # 계속 firing이면 5분마다 재전송
+    receivers:
+      - {name: "null"}
+      - name: obs-controller
+        webhook_configs:
+          # 해소 알림은 안 받는다 — 종료는 오직 리스 TTL 만료로만
+          - {url: "http://obs-controller.observability.svc:8080/hook",
+             send_resolved: false}
