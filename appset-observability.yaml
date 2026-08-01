@@ -34,7 +34,7 @@ spec:
           ref: values                     # ↑ $values 라는 이름을 이 소스에 부여
       destination:
         server: https://kubernetes.default.svc
-        namespace: observability
+        namespace: '{{.namespace}}'     # config.json 이 정한다 (demo / observability)
       syncPolicy:
         automated: {prune: true, selfHeal: true}
         syncOptions: [CreateNamespace=true, ServerSideApply=true]

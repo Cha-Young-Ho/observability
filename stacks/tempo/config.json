@@ -2,5 +2,6 @@
   "name": "tempo",
   "chart": "tempo",
   "version": "1.24.4",
-  "repoURL": "https://grafana.github.io/helm-charts"
+  "repoURL": "https://grafana.github.io/helm-charts",
+  "namespace": "observability"
 }

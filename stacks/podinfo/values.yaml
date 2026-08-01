@@ -1,0 +1,7 @@
+replicaCount: 2
+
+# 차트가 ServiceMonitor를 직접 만들어준다.
+# (손으로 만들던 podinfo-servicemonitor.yaml 은 이제 필요 없음)
+serviceMonitor:
+  enabled: true
+  interval: 15s
