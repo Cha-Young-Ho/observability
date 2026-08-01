@@ -13,4 +13,5 @@ grafana:
   defaultDashboardsEnabled: true       # K8s 기본 대시보드 자동 설치
   additionalDataSources:              # Explore에서 로그·트레이스로 건너뛰기 위함
     - {name: Loki,  type: loki,  url: "http://loki:3100",  access: proxy}
-    - {name: Tempo, type: tempo, url: "http://tempo:3100", access: proxy}
+    # Tempo 의 쿼리 API 는 3200 이다. 3100 은 Loki 포트라 복사하다 틀리기 쉽다.
+    - {name: Tempo, type: tempo, url: "http://tempo:3200", access: proxy}
