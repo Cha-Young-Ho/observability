@@ -4,17 +4,20 @@ metadata:
   name: bootstrap
   namespace: argocd
 spec:
+  # bootstrap 자신은 아무도 관리하지 않는다. 그래서 project 는 default 를 쓰고,
+  # 이 파일만 사람이 직접 apply 한다. 모든 GitOps 도구가 겪는 닭-달걀 문제다.
   project: default
   source:
     repoURL: "https://github.com/Cha-Young-Ho/observability.git"
     targetRevision: main
-    path: .
+    # argocd/ 안에는 AppProject 와 ApplicationSet 만 둔다.
+    # 여기 있는 것이 나머지 전부를 만들어낸다.
+    path: argocd
     directory:
-      recurse: false                    # 하위 디렉터리(common/, apps/)는 건드리지 않는다
-      include: "appset-*.yaml"
+      recurse: false
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd                   # ApplicationSet은 argocd 네임스페이스에 산다
+    namespace: argocd
   syncPolicy:
     automated: {prune: true, selfHeal: true}
     syncOptions: [ServerSideApply=true]

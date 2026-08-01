@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: infrastructure
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+
+  # infrastructure/<이름>/config.json 을 스캔한다.
+  # 디렉터리 하나 = 도구 하나. 이 파일은 다시 고칠 일이 없다.
+  generators:
+    - git:
+        repoURL: "https://github.com/Cha-Young-Ho/observability.git"
+        revision: main
+        files:
+          - {path: "infrastructure/*/config.json"}
+
+  template:
+    metadata:
+      name: '{{.name}}'
+    spec:
+      project: platform
+      sources:
+        # 소스 1: 외부 Helm 저장소의 차트
+        - repoURL: '{{.repoURL}}'
+          chart: '{{.chart}}'
+          targetRevision: '{{.version}}'      # 버전 고정 = 재현성
+          helm:
+            # 환경별 values 를 겹쳐 쌓을 때를 대비. 없는 파일은 건너뛴다.
+            ignoreMissingValueFiles: true
+            valueFiles:
+              - $values/infrastructure/{{.name}}/values.yaml
+        # 소스 2: values 를 담은 이 저장소 ($values 라는 별명)
+        - repoURL: "https://github.com/Cha-Young-Ho/observability.git"
+          targetRevision: main
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        automated: {prune: true, selfHeal: true}
+        syncOptions: [CreateNamespace=true, ServerSideApply=true]

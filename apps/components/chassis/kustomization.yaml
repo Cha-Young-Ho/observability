@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+# 조직 표준 뼈대. 모든 앱이 참조한다.
+# 여기를 고치면 참조하는 모든 앱이 다음 동기화에 함께 바뀐다 — 폭발 반경이 전역이다.
+
+labels:
+  # includeSelectors: false 가 중요하다.
+  # true 로 두면 Deployment 의 selector 까지 바뀌는데, selector 는 불변 필드라
+  # 기존 Deployment 업데이트가 거부된다.
+  - includeSelectors: false
+    pairs:
+      app.kubernetes.io/managed-by: argocd
+      platform.obs-lab/chassis: v1
+
+patches:
+  # 종료 시 graceful shutdown 시간을 조직 표준으로 통일
+  - target:
+      kind: Deployment
+    patch: |
+      - op: add
+        path: /spec/template/spec/terminationGracePeriodSeconds
+        value: 30

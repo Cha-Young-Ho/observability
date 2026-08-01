@@ -1,0 +1,19 @@
+# 앱 컨테이너 옆에 fluent-bit 을 붙이고, 설정 볼륨을 마운트한다.
+- op: add
+  path: /spec/template/spec/containers/-
+  value:
+    name: fluent-bit
+    image: fluent/fluent-bit:3.1
+    resources:
+      requests: {memory: "32Mi", cpu: "10m"}
+      limits: {memory: "64Mi"}
+    volumeMounts:
+      # 앱이 로그를 쓰는 곳. base 에서 emptyDir 로 선언되어 있어야 한다.
+      - {name: applogs, mountPath: /var/log/app, readOnly: true}
+      - {name: fbconf, mountPath: /fluent-bit/etc}
+
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: fbconf
+    configMap: {name: fluentbit-config}

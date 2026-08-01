@@ -7,27 +7,27 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
 
-  # apps/<이름>/config.json 을 스캔한다.
-  # 디렉터리 하나 = 서비스 하나 = Application 하나.
+  # apps/overlays/<환경>/<서비스>/config.json 을 스캔한다.
+  # 클러스터가 둘 이상이 되면 이 제너레이터만 matrix 로 바꾸고
+  # 환경을 클러스터 라벨에서 받아오면 된다. 디렉터리 구조는 그대로 쓴다.
   generators:
     - git:
         repoURL: "https://github.com/Cha-Young-Ho/observability.git"
         revision: main
         files:
-          - {path: "apps/*/config.json"}
+          - {path: "apps/overlays/*/*/config.json"}
 
   template:
     metadata:
       name: '{{.name}}'
     spec:
-      project: default
+      project: '{{.team}}'          # 서비스마다 다른 AppProject → 권한 격리
       source:
         repoURL: "https://github.com/Cha-Young-Ho/observability.git"
         targetRevision: main
-        path: '{{.path.path}}'        # 제너레이터가 준 디렉터리 경로 (apps/podinfo)
-        directory:
-          recurse: true               # 하위 디렉터리까지 (예: sidecar/)
-          exclude: "config.json"      # 메타 파일은 매니페스트가 아니므로 제외
+        # kustomization.yaml 이 있으면 ArgoCD 가 자동으로 kustomize 로 렌더링한다.
+        # config.json 은 kustomization 이 참조하지 않으므로 그냥 무시된다.
+        path: '{{.path.path}}'
       destination:
         server: https://kubernetes.default.svc
         namespace: '{{.namespace}}'

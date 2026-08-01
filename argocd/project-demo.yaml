@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: demo
+  namespace: argocd
+spec:
+  description: demo 팀 서비스
+
+  sourceRepos:
+    - "https://github.com/Cha-Young-Ho/observability.git"
+
+  # 자기 네임스페이스 밖으로는 배포할 수 없다.
+  destinations:
+    - {server: "https://kubernetes.default.svc", namespace: demo}
+
+  # 클러스터 스코프 리소스 생성 금지.
+  # 서비스 팀이 ClusterRole 이나 CRD 를 만들 이유는 없다.
+  clusterResourceWhitelist: []
+
+  # 자기 할당량을 스스로 늘리지 못하게 막는다.
+  namespaceResourceBlacklist:
+    - {group: "", kind: ResourceQuota}
+    - {group: "", kind: LimitRange}

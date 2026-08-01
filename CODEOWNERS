@@ -1,0 +1,27 @@
+# 디렉터리 단위로 리뷰 권한을 나눈다.
+# 모노레포에서 "아무나 아무거나 바꾸는" 것을 막는 첫 번째 겹.
+# 두 번째 겹은 argocd/project-*.yaml 의 AppProject 다.
+#
+# 지금은 1인 랩이라 실질적 강제력은 없지만, 경계를 문서화해 두면
+# 사람이 늘었을 때 그대로 동작한다. 나중에 붙이는 것보다 훨씬 싸다.
+
+# 기본 소유자
+*                               @Cha-Young-Ho
+
+# ── 플랫폼 팀만 ──
+/argocd/                        @Cha-Young-Ho
+/bootstrap.yaml                 @Cha-Young-Ho
+/infrastructure/                @Cha-Young-Ho
+/apps/components/               @Cha-Young-Ho
+/apps/base/_chassis/            @Cha-Young-Ho
+
+# ── 서비스 팀 ──
+# 팀이 생기면 이런 식으로 나눈다:
+# /apps/base/order-api/         @org/commerce-team
+# /apps/overlays/*/order-api/   @org/commerce-team
+/apps/base/podinfo/             @Cha-Young-Ho
+/apps/overlays/*/podinfo/       @Cha-Young-Ho
+
+# ── 운영 환경은 양쪽 승인 ──
+# 브랜치 보호 규칙에서 "Require review from Code Owners"를 켜야 실제로 강제된다.
+# /apps/overlays/prod/          @Cha-Young-Ho @org/sre-oncall

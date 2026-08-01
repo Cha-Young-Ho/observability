@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# 이 서비스의 "본질" — 이미지, 포트, 노출 방식.
+# 환경마다 달라지는 값(레플리카, 태그, 사이드카 여부)은 overlays 에서 정한다.
+resources:
+  - deployment.yaml
+  - service.yaml
+  - servicemonitor.yaml
