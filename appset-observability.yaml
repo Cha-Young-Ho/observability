@@ -8,12 +8,14 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
     - list:
-        elments:
+        elements:
           - {name: kps,   chart: kube-prometheus-stack, version: "88.0.1",
              repoURL: "https://prometheus-community.github.io/helm-charts"}
           - {name: loki,  chart: loki,  version: "7.2.0",
              repoURL: "https://grafana.github.io/helm-charts"}
           - {name: tempo, chart: tempo, version: "1.24.4",
+             repoURL: "https://grafana.github.io/helm-charts"}
+          - {name: promtail, chart: promtail, version: "6.17.1",
              repoURL: "https://grafana.github.io/helm-charts"}
   # ── 템플릿: 각 항목을 어떤 Application으로 만들 것인가 ──
   template:
